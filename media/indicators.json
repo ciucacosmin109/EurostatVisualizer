@@ -1,0 +1,17 @@
+[
+    {
+        "indicator": "PIB", 
+        "nume": "Pib/capita",
+        "sursa": "http://ec.europa.eu/eurostat/wdds/rest/data/v2.1/json/en/sdg_08_10?na_item=B1GQ&precision=1&unit=CLV10_EUR_HAB"
+    },
+    {
+        "indicator": "SV", 
+        "nume": "Speranta de viata",
+        "sursa": "http://ec.europa.eu/eurostat/wdds/rest/data/v2.1/json/en/demo_mlexpec?precision=1&sex=T&age=Y1"
+    },
+    {
+        "indicator": "POP", 
+        "nume": "Populatia",
+        "sursa": "http://ec.europa.eu/eurostat/wdds/rest/data/v2.1/json/en/demo_pjan?precision=1&sex=T&age=TOTAL"
+    }
+]

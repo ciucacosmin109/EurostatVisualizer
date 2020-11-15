@@ -1,0 +1,199 @@
+* {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: large;
+}
+
+.statusBar{
+    z-index: 999;
+    border-bottom: 1px solid black;
+
+    color:white;
+    background-color: #35363A;
+    position: fixed;
+    top:0;
+    left:0;
+    right:0;
+    overflow: hidden;
+    height: 1.4em;
+
+    padding: 0.7em;
+}
+.statusBar * {
+    display: inline;
+    margin: 0;
+}
+.statusBar .extraInfo {
+    float: right;
+}
+.statusBarSpacer{
+    height: 2.7em;
+} 
+@media only screen and (max-width: 320px) { 
+    .statusBar{
+        height: 2.0em;
+    }
+    .statusBarSpacer{
+        height: 4em;
+    } 
+    .statusBar .extraInfo {
+        float: none;
+        display: block;
+        text-align: right;
+    }
+}
+
+
+
+.card{
+    display: inline-block;
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: white; 
+    overflow: hidden;
+    margin-bottom: 2em;
+
+    width:49%; 
+}
+.card-header{
+    border-bottom: 1px solid gray;  
+    background-color: #35363A;
+    color:white; 
+    padding: 0.4em;
+}
+.card-body{  
+    position: relative;
+    padding: 0.5em; 
+    padding-bottom: 0;
+
+    overflow-x: scroll;
+}
+.card-body select{ 
+    width: auto; 
+} 
+.card-body #lineGraphSvg{
+    width: 100%;
+    display: block;
+}   
+.right-card{
+    float: right; 
+} 
+@media only screen and (max-width: 1020px) { 
+    .card{ 
+        margin: 0 auto;
+        margin-bottom: 2em;
+        width: 600px;
+        display: block;
+    }
+    .right-card{
+        float: unset;  
+    } 
+}
+@media only screen and (max-width: 690px) { 
+    .card{  
+        width: 100%;
+        display: block;
+    }
+    .right-card{
+        float: unset;  
+    } 
+}
+
+
+.component {   
+    margin: 0 0 0.5em 0;
+    padding: 0;
+    border: 1px solid gray;
+    border-radius: 5px;
+    background-color: #EFEEF3; 
+    border-collapse: collapse;
+}
+
+ 
+
+.graph .x-labels {
+    writing-mode: vertical-rl; 
+    text-anchor: middle;
+} 
+.graph .y-labels {
+    writing-mode: horizontal-tb;  
+    text-anchor: end;
+} 
+.graph .x-title { 
+    font-size: xx-large; 
+    text-anchor: middle;
+
+    writing-mode: horizontal-tb; 
+} 
+.graph .y-title { 
+    font-size: xx-large; 
+    text-anchor: middle;
+ 
+    writing-mode: vertical-rl; 
+}
+ 
+.graph .base-grid {
+    stroke: gray;
+    stroke-dasharray: 1;
+    stroke-width: 2;
+} 
+.graph .level-grid {
+    stroke: gray;
+    stroke-dasharray: 5;
+    stroke-width: 1;
+} 
+
+
+.data-points {   
+    opacity: 0%;
+}
+.data-points circle {
+    transition: all 1s ease;
+    fill: red; 
+} 
+.tool-tip{ 
+    fill: gray;
+    text-anchor: middle;
+    border: 1px solid gray;
+    transform: translateY(-1em);
+    
+    transition: all 0.5s ease;
+    opacity: 0%;
+}
+.data-line {
+    fill: none;
+    stroke: lightcoral;
+    stroke-width: 3;   
+ 
+    opacity: 0%;
+} 
+.data-line-zone {
+    fill: none;
+    stroke: lightblue;
+    stroke-width: 50;   
+ 
+    opacity: 0%;
+} 
+
+
+
+
+.table {
+    width:100%;
+}
+.table td, .table th{
+    border: 1px solid rgb(156, 156, 156);
+    border-radius: 3px;
+    padding: 0.3rem;
+    overflow: hidden;
+} 
+.table tbody tr{
+    background-color: white;
+} 
+.table tbody tr:hover {
+    color: red; 
+    cursor: default;
+}
+.table .table-number{
+    text-align: right;
+    width: 1px;
+}

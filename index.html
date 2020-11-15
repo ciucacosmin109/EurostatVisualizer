@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Proiect 3 MM - Vizualizare Date - Ciuca Marius Cosmin</title>
+ 
+        <link rel="stylesheet" href="3_1078_CIUCA_Marius_Cosmin.css" />  
+        <script type="text/javascript" src="3_1078_CIUCA_Marius_Cosmin.js"></script>  
+    </head>
+    <body> 
+        <div class="statusBar">
+            <p class="title">Vizualizare date</p>
+            <p class="extraInfo">Sursa: <span id="dataSource">Demo</span></p>
+        </div>
+        <div class="statusBarSpacer"></div>
+
+        <div class="card">
+            <div class="card-header">Grafic</div> 
+            <div class="card-body lineGraph">
+                <label for="selectCountry">Selectati tara:</label>
+                <select id="selectCountry" class="component">
+                    <option value="BE">(BE) Belgia</option>
+                    <option value="BG">(BG) Bulgaria</option>
+                    <option value="CZ">(CZ) Republica Ceha</option>
+                    <option value="DK">(DK) Danemarca</option>
+                    <option value="DE">(DE) Germania</option>
+                    <option value="EE">(EE) Estonia</option>
+                    <option value="IE">(IE) Irlanda</option>
+                    <option value="EL">(EL) Grecia</option>
+                    <option value="ES">(ES) Spania</option>
+                    <option value="FR">(FR) Franta</option>
+                    <option value="HR">(HR) Croatia</option>
+                    <option value="IT">(IT) Italia</option>
+                    <option value="CY">(CY) Cipru</option>
+                    <option value="LV">(LV) Letonia</option>
+                    <option value="LT">(LT) Lituania</option>
+                    <option value="LU">(LU) Luxemburg</option>
+                    <option value="HU">(HU) Ungaria</option>
+                    <option value="MT">(MT) Malta</option>
+                    <option value="NL">(NL) Olanda</option>
+                    <option value="AT">(AT) Austria</option>
+                    <option value="PL">(PL) Polonia</option>
+                    <option value="PT">(PT) Portugalia</option>
+                    <option value="RO">(RO) Romania</option>
+                    <option value="SI">(SI) Slovenia</option>
+                    <option value="SK">(SK) Slovacia</option>
+                    <option value="FI">(FI) Finlanda</option>
+                    <option value="SE">(SE) Suedia</option>
+                </select>
+                <br/>
+                
+                <label for="selectCountry">Selectati indicatorul:</label>
+                <select id="selectIndicator" class="component"> 
+                    <option value="PIB">(PIB) Pib/capita</option>
+                    <option value="SV">(SV) Speranta de viata</option>
+                    <option value="POP">(POP) Populatia</option>
+                </select>  
+
+                <svg id="lineGraphSvg" viewBox="0 0 800 600" class="component graph">  
+                    <g> 
+                        <line class="level-grid" x1="170" x2="770" y1="50" y2="50"></line> 
+                        <line class="level-grid" x1="170" x2="770" y1="125" y2="125"></line> 
+                        <line class="level-grid" x1="170" x2="770" y1="200" y2="200"></line> 
+                        <line class="level-grid" x1="170" x2="770" y1="275" y2="275"></line> 
+                        <line class="level-grid" x1="170" x2="770" y1="350" y2="350"></line> 
+                        <line class="level-grid" x1="170" x2="770" y1="425" y2="420"></line> 
+                        <line class="base-grid" x1="170" x2="770" y1="500" y2="500"></line>
+                    </g>
+                    
+                    <g class="y-labels">
+                        <text x="150" y="50" >00000000</text>
+                        <text x="150" y="125">0000000</text>
+                        <text x="150" y="200">000000</text>
+                        <text x="150" y="275">00000</text>
+                        <text x="150" y="350">0000</text>
+                        <text x="150" y="425">000</text>
+                        <text x="150" y="500">0</text>
+                        
+                        <text x="30" y="300" class="y-title">Indicator</text>
+                    </g>
+
+                    <g class="x-labels">
+                        <text x="190" y="550">0000</text>
+                        <text x="230" y="550">0000</text>
+                        <text x="270" y="550">0000</text>
+                        <text x="310" y="550">0000</text>
+                        <text x="350" y="550">0000</text>
+                        <text x="390" y="550">0000</text>
+                        <text x="430" y="550">0000</text>
+                        <text x="470" y="550">0000</text>
+                        <text x="510" y="550">0000</text>
+                        <text x="550" y="550">0000</text>
+                        <text x="590" y="550">0000</text>
+                        <text x="630" y="550">0000</text>
+                        <text x="670" y="550">0000</text>
+                        <text x="710" y="550">0000</text>
+                        <text x="750" y="550">0000</text> 
+                    </g>
+
+                    <polyline class="data-line" 
+                        points="
+                        190,500
+                        230,500
+                        270,500
+                        310,500
+                        350,500
+                        390,500
+                        430,500
+                        470,500
+                        510,500
+                        550,500
+                        590,500
+                        630,500
+                        670,500
+                        710,500
+                        750,500" />
+        
+                    <g id="lineGraphPoints" class="data-points"> 
+                        <circle cx="190" cy="500" r="6"></circle>
+                        <circle cx="230" cy="500" r="6"></circle>
+                        <circle cx="270" cy="500" r="6"></circle>
+                        <circle cx="310" cy="500" r="6"></circle>
+                        <circle cx="350" cy="500" r="6"></circle>
+                        <circle cx="390" cy="500" r="6"></circle>
+                        <circle cx="430" cy="500" r="6"></circle>
+                        <circle cx="470" cy="500" r="6"></circle>
+                        <circle cx="510" cy="500" r="6"></circle>
+                        <circle cx="550" cy="500" r="6"></circle>
+                        <circle cx="590" cy="500" r="6"></circle>
+                        <circle cx="630" cy="500" r="6"></circle>
+                        <circle cx="670" cy="500" r="6"></circle>
+                        <circle cx="710" cy="500" r="6"></circle>
+                        <circle cx="750" cy="500" r="6"></circle>
+                    </g>  
+                    
+                    <polyline class="data-line-zone" 
+                        points="
+                        190,500
+                        230,500
+                        270,500
+                        310,500
+                        350,500
+                        390,500
+                        430,500
+                        470,500
+                        510,500
+                        550,500
+                        590,500
+                        630,500
+                        670,500
+                        710,500
+                        750,500" />
+
+                    <text class="tool-tip" id="lineGraphToolTip" x="190" y="500">xcvb</text>
+                
+                </svg>
+            </div>
+        </div>
+ 
+        <div class="card right-card">
+            <div class="card-header">Tabel</div> 
+            <div class="card-body scrollable"> 
+                <label for="selectYear">Selectati anul:</label>
+                <select id="selectYear" class="component"></select>  
+                
+                <table class="component table"> 
+                    <thead>
+                        <tr>
+                            <th>Tara</th>
+                            <th>PIB</th>
+                            <th>SV</th>
+                            <th>POP</th>
+                        </tr>
+                    </thead> 
+                    <tbody>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                        <tr>
+                            <td>Romania</td>
+                            <td class="table-number">00000</td> 
+                            <td class="table-number">000</td> 
+                            <td class="table-number">000000000</td> 
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </body>
+</html>
