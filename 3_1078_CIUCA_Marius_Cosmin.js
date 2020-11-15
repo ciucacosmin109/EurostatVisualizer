@@ -1,6 +1,8 @@
 // Hmm
 let dataSet = {
-    externalSources: [], // formatul din indicators.json : indicator, nume, sursa 
+    allowedCountries: [], // formatul din indicators.json : indicator, nume, sursa 
+    indicatorsExtSources: [], // formatul din indicators.json : indicator, nume, sursa 
+    
     jsonData: [], // formatul din eurostat.json : tara, an, indicator, valoare 
     currentSource: "DEMO",
 }
@@ -29,10 +31,17 @@ function update_options(jsonResponse, elementId, valueName, optionName){
     }
 } 
 
+// Preia tarile din countries.json 
+fetch('media/countries.json').then(response => response.json()).then(countries => {
+    // Salveaza tarile si repopuleaza dropdown-ul cu tari
+    dataSet.allowedCountries = countries;
+    update_options(countries, "selectCountry", "tara", "nume");
+});
+
 // Preia sursele externe pentru indicatori
 fetch('media/indicators.json').then(response => response.json()).then(indicators => { 
     // Salveaza sursele externe si repopuleaza dropdown-ul cu indicatori
-    dataSet.externalSources = indicators;
+    dataSet.indicatorsExtSources = indicators;
     update_options(indicators, "selectIndicator", "indicator", "nume"); 
 
     // 1. Preia datele de la eurostat
@@ -49,20 +58,22 @@ fetch('media/indicators.json').then(response => response.json()).then(indicators
 }).then(res => { // Face merge la listele returnate de Promise.all
     dataSet.jsonData = res.reduce((total, cVal) => { // cVal este o lista
         return total.concat(cVal);
-    }, []); // [] e valoarea initiala
-
-    dataSet.currentSource = "Eurostat"; 
-    update_lineGraph(); // Actualizeaza graficul
+    }, []); // [] e valoarea initiala 
+    dataSet.currentSource = "Eurostat";
     document.getElementById("dataSource").textContent = dataSet.currentSource;
 
+    update_lineGraph(); // Actualizeaza graficul
+    update_year_dropdown(dataSet.jsonData);
+    update_table(dataSet.jsonData, 1960)
 }).catch(err => { // daca reqest ul esueaza , incarca datele demo 
     // Incarca datele demo
     fetch('media/eurostat.json').then(response => response.json()).then(data => { 
-        dataSet.jsonData = data; 
-        
+        dataSet.jsonData = data;  
         dataSet.currentSource = "Demo"; // Adauga 'Demo' la sursa de date 
-        update_lineGraph(); // Actualizeaza graficul
         document.getElementById("dataSource").textContent = dataSet.currentSource;
+        
+        update_lineGraph(); // Actualizeaza graficul
+        update_year_dropdown(dataSet.jsonData);
     }); 
 });
 // 1. Functie care converteste datele de pe eurostat in formatul din cerinta
@@ -113,6 +124,7 @@ function find_county_or_year(countryIdxObj, id){
     }
     return keys[j]; 
 } 
+
 
 
 // Functii pentru actualizarea graficului
@@ -200,6 +212,38 @@ function update_lineGraph(){
     );
 }
 
+
+
+// Functii pentru actualizarea tabelului
+function update_year_dropdown(dataList){
+    // dataList - formatul din eurostat.json
+
+    // Extrag anii stergand duplicatele
+    let uniqueYears = dataList.map(x => x.an).filter((val, idx, arr) => {
+        return arr.indexOf(val) === idx;
+    }).sort(); 
+
+    // Pentru fiecare an adaug un copil la 'selectYear'
+    let years = document.getElementById("selectYear");
+    for (let i = 0; i < uniqueYears.length; i++) {
+        let y = document.createElement("option");
+        y.value = uniqueYears[i];
+        y.textContent = uniqueYears[i];
+        years.appendChild(y);
+    }
+}
+function update_table(dataList, year){ 
+    // Filtreaza datele dupa an
+    let list = dataList.filter(x => x.year === year); 
+    
+    let countries = dataList.map(x => x.tara).filter((val, idx, arr) => {
+        return arr.indexOf(val) === idx;
+    }).sort();
+    console.log(countries);
+}
+
+
+
 // Dupa ce s-a incarcat pagina ...
 window.onload = () => { 
 
@@ -213,27 +257,6 @@ window.onload = () => {
     });
 
     let toolTip = document.getElementById("lineGraphToolTip");
-
-    // Seteaza tooltip ul pentru fiecare punct
-    /*let points = document.getElementById("lineGraphPoints").children;
-    for (let i = 0; i < points.length; i++) { 
-        points[i].addEventListener("mouseenter", e => {
-            toolTip.textContent = lineGraph.currentData[i].valoare; 
-
-            toolTip.setAttribute("x", e.target.getAttribute("cx"));
-            toolTip.setAttribute("y", e.target.getAttribute("cy")); 
-  
-            e.target.setAttribute("r", 10); 
-            toolTip.style.opacity = "100%";
-        });
-        points[i].addEventListener("mouseleave", e => {
-            toolTip.setAttribute("x", 0);
-            toolTip.setAttribute("y", 0); 
-
-            e.target.setAttribute("r", 6); 
-            toolTip.style.opacity = "0%";
-        });
-    }*/
  
     // Seteaza tooltip ul pentru coordonatele cursorului
     let svg = document.getElementById("lineGraphSvg");
