@@ -1,7 +1,8 @@
 // Hmm
 let dataSet = {
-    allowedCountries: [], // formatul din indicators.json : indicator, nume, sursa 
+    allowedCountries: [], // formatul din countries.json : tara, nume 
     indicatorsExtSources: [], // formatul din indicators.json : indicator, nume, sursa 
+    allowedYears: [], // o lista cu ani pentru tabel
     
     jsonData: [], // formatul din eurostat.json : tara, an, indicator, valoare 
     currentSource: "DEMO",
@@ -11,9 +12,12 @@ let lineGraph = {
     currentIndicator: "PIB",   
     currentData: [], // formatul din eurostat.json : tara(*), an, indicator(*), valoare => e filtrat dupa (*) 
 }
+let indicatorsTable = {
+    currentYear: 0,
+}
 
-// Populeaza un dropdown cu date selectate (folosita la incarcarea indicatorilor)
-// jsonResponse - formatul din indicators.json
+// Populeaza un dropdown cu date selectate (folosita la incarcarea indicatorilor/tarilor)
+// jsonResponse - lista cu obiecte din care se selecteaza atributele 'valueName' si 'optionName'
 function update_options(jsonResponse, elementId, valueName, optionName){ 
     // Preiau elementul si sterg toti copii (taguri <option>)
     let selectTag = document.getElementById(elementId);
@@ -21,9 +25,13 @@ function update_options(jsonResponse, elementId, valueName, optionName){
 
     // Pentru fiecare obiect din fisierul json populez cu taguri <option>
     for(let i = 0; i < jsonResponse.length; i++) {
-        let val = jsonResponse[i][valueName];
-        let opt = `(${val}) ` + jsonResponse[i][optionName];
+        let obj = jsonResponse[i];
 
+        // daca valueName sau option name sunt null atunci atribuie direct obiectul
+        let val = valueName != null ? obj[valueName] : obj;
+        let opt = optionName != null ? (`(${val}) ` + obj[optionName]) : obj;
+
+        // Creez elementul si il adaug la lista de copii
         let el = document.createElement("option");
         el.textContent = opt;
         el.value = val;
@@ -31,51 +39,74 @@ function update_options(jsonResponse, elementId, valueName, optionName){
     }
 } 
 
-// Preia tarile din countries.json 
-fetch('media/countries.json').then(response => response.json()).then(countries => {
-    // Salveaza tarile si repopuleaza dropdown-ul cu tari
-    dataSet.allowedCountries = countries;
-    update_options(countries, "selectCountry", "tara", "nume");
-});
 
-// Preia sursele externe pentru indicatori
-fetch('media/indicators.json').then(response => response.json()).then(indicators => { 
-    // Salveaza sursele externe si repopuleaza dropdown-ul cu indicatori
-    dataSet.indicatorsExtSources = indicators;
-    update_options(indicators, "selectIndicator", "indicator", "nume"); 
+// Functie care preia tarile/indicatorii din json si face request la eurostat
+function load_data(){
+    // Preia tarile din countries.json apoi sursele externe pentru indicatori apoi ...
+    fetch('media/countries.json').then(response => response.json()).then(countries => {
+        // Salveaza tarile si repopuleaza dropdown-ul cu tari
+        dataSet.allowedCountries = countries;
+        update_options(countries, "selectCountry", "tara", "nume");
+        lineGraph.currentCountry = dataSet.allowedCountries[0].tara;
+    }).then( () => fetch('media/indicators.json').then(response => response.json()).then(indicators => { 
+        // Salveaza sursele externe si repopuleaza dropdown-ul cu indicatori
+        dataSet.indicatorsExtSources = indicators;
+        update_options(indicators, "selectIndicator", "indicator", "nume"); 
+        lineGraph.currentIndicator = dataSet.indicatorsExtSources[0].indicator;
 
-    // 1. Preia datele de la eurostat
-    let promises = []
-    for (let i = 0; i < indicators.length; i++) { 
-        promises.push(
-            fetch(indicators[i].sursa)
-                .then(x => x.json())
-                .then(x => convert_data(x, indicators[i].indicator))
-        );
-    }
-    return Promise.all(promises);
+        // 1. Preia datele de la eurostat
+        let promises = []
+        for (let i = 0; i < indicators.length; i++) { 
+            promises.push(
+                fetch(indicators[i].sursa)
+                    .then(x => x.json())
+                    .then(x => convert_data(x, indicators[i].indicator))
+            );
+        }
+        return Promise.all(promises);
 
-}).then(res => { // Face merge la listele returnate de Promise.all
-    dataSet.jsonData = res.reduce((total, cVal) => { // cVal este o lista
-        return total.concat(cVal);
-    }, []); // [] e valoarea initiala 
-    dataSet.currentSource = "Eurostat";
-    document.getElementById("dataSource").textContent = dataSet.currentSource;
+    })).then(res => { // Face merge la listele returnate de Promise.all
+        dataSet.jsonData = res.reduce((total, cVal) => { // cVal este o lista
+            return total.concat(cVal);
+        }, []); // [] e valoarea initiala 
+        dataSet.jsonData = dataSet.jsonData.filter(x => dataSet.allowedCountries.find(y => y.tara === x.tara) != null ); // elimina tarile care nu sunt relevante
 
-    update_lineGraph(); // Actualizeaza graficul
-    update_year_dropdown(dataSet.jsonData);
-    update_table(dataSet.jsonData, 1960)
-}).catch(err => { // daca reqest ul esueaza , incarca datele demo 
-    // Incarca datele demo
-    fetch('media/eurostat.json').then(response => response.json()).then(data => { 
-        dataSet.jsonData = data;  
-        dataSet.currentSource = "Demo"; // Adauga 'Demo' la sursa de date 
+        dataSet.currentSource = "Eurostat";
+        dataSet.allowedYears = get_valid_years(dataSet.jsonData);
         document.getElementById("dataSource").textContent = dataSet.currentSource;
-        
-        update_lineGraph(); // Actualizeaza graficul
-        update_year_dropdown(dataSet.jsonData);
-    }); 
-});
+
+        // Gaseste anii si populeaza dropdown-ul
+        dataSet.allowedYears = get_valid_years(dataSet.jsonData);
+        update_options(dataSet.allowedYears, "selectYear", null, null); // Pentru fiecare an adaug un copil la 'selectYear'
+        indicatorsTable.currentYear = dataSet.allowedYears[0];
+
+        // Actualizeaza graficul si tabelul cu date initiale
+        update_lineGraph();  
+        update_indicatorsTable(); // Actualizeaza tabelul 
+    }).catch(err => { // daca reqest ul esueaza , incarca datele demo 
+        console.log(err);
+
+        // Incarca datele demo
+        fetch('media/eurostat.json').then(response => response.json()).then(data => { 
+            dataSet.jsonData = data;  
+            dataSet.jsonData = dataSet.jsonData.filter(x => dataSet.allowedCountries.find(y => y.tara === x.tara) != null ); // elimina tarile care nu sunt relevante
+            
+            dataSet.currentSource = "Demo"; // Adauga 'Demo' la sursa de date 
+            document.getElementById("dataSource").textContent = dataSet.currentSource;
+            
+            // Gaseste anii si populeaza dropdown-ul
+            dataSet.allowedYears = get_valid_years(dataSet.jsonData);
+            update_options(dataSet.allowedYears, "selectYear", null, null); // Pentru fiecare an adaug un copil la 'selectYear'
+            indicatorsTable.currentYear = dataSet.allowedYears[0];
+
+            // Actualizeaza graficul si tabelul cu date initiale
+            update_lineGraph();  
+            update_indicatorsTable(); // Actualizeaza tabelul 
+        }); 
+    });
+}
+// Apelez functia chiar daca pagina nu s-a incarcat
+load_data();
 // 1. Functie care converteste datele de pe eurostat in formatul din cerinta
 function convert_data(esData, indicator){
     let convertedData = [];
@@ -86,7 +117,7 @@ function convert_data(esData, indicator){
 
     // Datele sunt reprezentate de un tabel cu:
     // nCountries linii si nYears coloane
-    for(let i = 0; i < nCountries*nYears; i++){
+    for(let i = 0; i < nCountries * nYears; i++){
         let lineIdx = Math.floor(i / nYears);
         let columnIdx = i % nYears;
 
@@ -215,31 +246,110 @@ function update_lineGraph(){
 
 
 // Functii pentru actualizarea tabelului
-function update_year_dropdown(dataList){
+function get_valid_years(dataList){
     // dataList - formatul din eurostat.json
 
     // Extrag anii stergand duplicatele
-    let uniqueYears = dataList.map(x => x.an).filter((val, idx, arr) => {
+    return dataList.map(x => x.an).filter((val, idx, arr) => {
         return arr.indexOf(val) === idx;
     }).sort(); 
+} 
+function get_indicator_value(dataList, country, indicator, year){
+    let res = dataList.find(x => x.tara === country && x.indicator === indicator && x.an === year)
+    
+    return ( res != null && res.valoare != null ) ? res.valoare : "-"; 
+}
+function get_indicator_average(dataList, indicator, year){
+    // Returneaza o lista de obiecte cu media si diferenta maxima de la medie
 
-    // Pentru fiecare an adaug un copil la 'selectYear'
-    let years = document.getElementById("selectYear");
-    for (let i = 0; i < uniqueYears.length; i++) {
-        let y = document.createElement("option");
-        y.value = uniqueYears[i];
-        y.textContent = uniqueYears[i];
-        years.appendChild(y);
+    // Filtreaza dupa an si indicator
+    let list = dataList.filter(x => x.an === year && x.indicator === indicator && x.valoare != null).map(x => x.valoare);
+    
+    //validare
+    if(list == null || list.length == 0){
+        return 0;
     }
+
+    // returneaza obiectul
+    let avg = list.reduce((total, cVal) => total + cVal) / list.length; 
+    let min = Math.min(...list);
+    let max = Math.max(...list);
+
+    let maxDiff = 0;
+    if(avg - min > max - avg){
+        maxDiff = avg - min;
+    }else{
+        maxDiff = max - avg;
+    }
+
+    return { 
+        avg: avg,
+        maxDiff: maxDiff,
+    };
 }
 function update_table(dataList, year){ 
     // Filtreaza datele dupa an
-    let list = dataList.filter(x => x.year === year); 
-    
-    let countries = dataList.map(x => x.tara).filter((val, idx, arr) => {
-        return arr.indexOf(val) === idx;
-    }).sort();
-    console.log(countries);
+    let list = dataList.filter(x => x.an == year);  
+     
+    // pentru fiecare indicator, gaseste mediile si returneaza-mi o lista cu ele in aceeasi ordine ca indicatorii
+    let indicatorsBounds = [];
+    for (let i = 0; i < dataSet.indicatorsExtSources.length; i++) { 
+        let ind = dataSet.indicatorsExtSources[i].indicator;
+
+        indicatorsBounds.push(get_indicator_average(list, ind, year));
+    }
+
+    // Sterge continutul tabelului
+    let header = document.querySelector("#indicatorsTable thead tr");
+    header.innerHTML = "";
+    let body = document.querySelector("#indicatorsTable tbody");
+    body.innerHTML = "";
+
+    // Construieste header-ul
+    let th = document.createElement("th"); 
+    th.textContent = "Tara";
+    header.appendChild(th);
+    for (let i = 0; i < dataSet.indicatorsExtSources.length; i++) { // Adauga toti indicatorii in header-ul tabelului
+        th = document.createElement("th"); 
+        th.textContent = dataSet.indicatorsExtSources[i].indicator;
+        header.appendChild(th);
+    }
+
+    // Pentru fiecare tara, afiseaza afiseaza cate un rand cu valorile
+    for (let i = 0; i < dataSet.allowedCountries.length; i++) {
+        let country = dataSet.allowedCountries[i]; // country are: tara si nume(*)
+         
+        let tr = document.createElement("tr");  // creaza randul
+        
+        // creaza td pentru numele tarii
+        let td = document.createElement("td");  
+        td.textContent = country.nume;
+        tr.appendChild(td);
+
+        // pentru fiecare indicator creeaza un td
+        for (let i = 0; i < dataSet.indicatorsExtSources.length; i++) { 
+            let ind = dataSet.indicatorsExtSources[i].indicator;
+
+            let value = get_indicator_value(list,country.tara,ind,year);
+            td = document.createElement("td");   
+            td.textContent = value;
+
+            // calculeaza hue din reprezentarea HSL in functie de medie
+            let diff = Math.abs(value - indicatorsBounds[i].avg);
+            let hue = diff/indicatorsBounds[i].maxDiff * 120;
+            hue = 120 - hue; // inversez hue ca sa am culoarea verde pentru valorile apropiate de medie si rosu pentru cele departate de medie
+
+            td.style.backgroundColor = `hsla(${hue}, 100%, 50%, 1)`;
+            tr.appendChild(td);
+        }
+
+        // ataseaza randul la tabel
+        body.appendChild(tr);
+    }
+}
+function update_indicatorsTable(){  
+    // actualizeaza tabelul
+    update_table(dataSet.jsonData, indicatorsTable.currentYear);
 }
 
 
@@ -254,6 +364,10 @@ window.onload = () => {
     document.getElementById("selectIndicator").addEventListener("change", e => {
         lineGraph.currentIndicator = e.target.value;   
         update_lineGraph();
+    });
+    document.getElementById("selectYear").addEventListener("change", e => {
+        indicatorsTable.currentYear = e.target.value;   
+        update_indicatorsTable();
     });
 
     let toolTip = document.getElementById("lineGraphToolTip");

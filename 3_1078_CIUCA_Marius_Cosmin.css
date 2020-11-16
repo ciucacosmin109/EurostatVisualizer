@@ -151,7 +151,7 @@
     fill: red; 
 } 
 .tool-tip{ 
-    fill: gray;
+    fill: black;
     text-anchor: middle;
     border: 1px solid gray;
     transform: translateY(-1em);
@@ -179,19 +179,20 @@
 
 .table {
     width:100%;
+    white-space:nowrap;
 }
 .table td, .table th{
     border: 1px solid rgb(156, 156, 156);
     border-radius: 3px;
     padding: 0.3rem;
-    overflow: hidden;
+    overflow: hidden; 
 } 
 .table tbody tr{
     background-color: white;
 } 
 .table tbody tr:hover {
-    color: red; 
-    cursor: default;
+    color: rgb(79, 79, 255); 
+    cursor: default; 
 }
 .table .table-number{
     text-align: right;
