@@ -5,15 +5,15 @@ let dataSet = {
     allowedYears: [], // o lista cu ani pentru tabel
     
     jsonData: [], // formatul din eurostat.json : tara, an, indicator, valoare 
-    currentSource: "DEMO",
+    currentSource: "Demo", // Daca se intampla o eroare la aducerea datelor de pe eurostat, se vor folosi datele din eurostat.json
 }
 let lineGraph = {     
-    currentCountry: "BE",
-    currentIndicator: "PIB",   
+    currentCountry: "BE", // Tara care este afisata la momentul actual in grafic
+    currentIndicator: "PIB", // Indicatorul care este afisat la momentul actual in grafic
     currentData: [], // formatul din eurostat.json : tara(*), an, indicator(*), valoare => e filtrat dupa (*) 
 }
 let indicatorsTable = {
-    currentYear: 0,
+    currentYear: 0, // Anul care este afisat in tabel
 }
 
 // Populeaza un dropdown cu date selectate (folosita la incarcarea indicatorilor/tarilor)
@@ -21,40 +21,47 @@ let indicatorsTable = {
 function update_options(jsonResponse, elementId, valueName, optionName){ 
     // Preiau elementul si sterg toti copii (taguri <option>)
     let selectTag = document.getElementById(elementId);
-    selectTag.innerHTML = "";
+    selectTag.innerHTML = ""; // sterg toate optiunile deja existente
 
     // Pentru fiecare obiect din fisierul json populez cu taguri <option>
     for(let i = 0; i < jsonResponse.length; i++) {
         let obj = jsonResponse[i];
 
-        // daca valueName sau option name sunt null atunci atribuie direct obiectul
+        // daca valueName sau option name sunt null atunci atribuie direct obiectul care poate fi si numar sau string
         let val = valueName != null ? obj[valueName] : obj;
         let opt = optionName != null ? (`(${val}) ` + obj[optionName]) : obj;
 
         // Creez elementul si il adaug la lista de copii
         let el = document.createElement("option");
-        el.textContent = opt;
-        el.value = val;
+        el.textContent = opt; // textul afisat utilizatorului
+        el.value = val; // valoarea tagului option
         selectTag.appendChild(el);
     }
 } 
 
 
 // Functie care preia tarile/indicatorii din json si face request la eurostat
-function load_data(){
-    // Preia tarile din countries.json apoi sursele externe pentru indicatori apoi ...
+function load_data(){ 
     fetch('media/countries.json').then(response => response.json()).then(countries => {
+        // Preia tarile din countries.json
+        
         // Salveaza tarile si repopuleaza dropdown-ul cu tari
         dataSet.allowedCountries = countries;
         update_options(countries, "selectCountry", "tara", "nume");
+
+        // Seteaza ca tara initiala valoarea selectata initial din dropdown
         lineGraph.currentCountry = dataSet.allowedCountries[0].tara;
     }).then( () => fetch('media/indicators.json').then(response => response.json()).then(indicators => { 
+        // Preia sursele externe pentru indicatori si fa request la aceste surse
+        
         // Salveaza sursele externe si repopuleaza dropdown-ul cu indicatori
         dataSet.indicatorsExtSources = indicators;
         update_options(indicators, "selectIndicator", "indicator", "nume"); 
+
+        // Seteaza ca indicator initial valoarea selectata initial din dropdown
         lineGraph.currentIndicator = dataSet.indicatorsExtSources[0].indicator;
 
-        // 1. Preia datele de la eurostat
+        // 1. Preia datele de la eurostat - face cate un promise pentru fiecare indicator din indicators.json
         let promises = []
         for (let i = 0; i < indicators.length; i++) { 
             promises.push(
@@ -63,14 +70,24 @@ function load_data(){
                     .then(x => convert_data(x, indicators[i].indicator))
             );
         }
-        return Promise.all(promises);
 
-    })).then(res => { // Face merge la listele returnate de Promise.all
-        dataSet.jsonData = res.reduce((total, cVal) => { // cVal este o lista
+        // Asteapta sa se rezolve toate promise-urile generate de request-uri
+        return Promise.all(promises); 
+    })).then(res => { // Combina listele returnate de Promise.all pentru a avea toti indicatorii in acelasi obiect
+        return res.reduce((total, cVal) => { // cVal este o lista aferenta indicatorului curent
             return total.concat(cVal);
-        }, []); // [] e valoarea initiala 
-        dataSet.jsonData = dataSet.jsonData.filter(x => dataSet.allowedCountries.find(y => y.tara === x.tara) != null ); // elimina tarile care nu sunt relevante
+        }, []); // [] e valoarea initiala  
 
+    }).then( res => { // Filtreaza rezultatele
+        // Elimina tarile care nu sunt relevante - nu se afla printre tarile din cerinta (vezi fisierul countries.json)
+        res = res.filter(x => dataSet.allowedCountries.find(y => y.tara === x.tara) != null );
+        // Preia doar ultimii 15 ani
+        let maxYear = Math.max(...res.map(x=>x.an)); 
+        res = res.filter(x => x.an > maxYear - 15); // elimina tarile care nu sunt relevante
+    
+        return res;
+    }).then( res => { // Salveaza datele si actualizeaza interfata
+        dataSet.jsonData = res;
         dataSet.currentSource = "Eurostat";
         dataSet.allowedYears = get_valid_years(dataSet.jsonData);
         document.getElementById("dataSource").textContent = dataSet.currentSource;
@@ -83,7 +100,7 @@ function load_data(){
         // Actualizeaza graficul si tabelul cu date initiale
         update_lineGraph();  
         update_indicatorsTable(); // Actualizeaza tabelul 
-    }).catch(err => { // daca reqest ul esueaza , incarca datele demo 
+    }).catch(err => { // daca a esuat ceva, incarca datele demo 
         console.log(err);
 
         // Incarca datele demo
@@ -248,6 +265,7 @@ function update_lineGraph(){
 // Functii pentru actualizarea tabelului
 function get_valid_years(dataList){
     // dataList - formatul din eurostat.json
+    // Functia sterge anii duplicati
 
     // Extrag anii stergand duplicatele
     return dataList.map(x => x.an).filter((val, idx, arr) => {
