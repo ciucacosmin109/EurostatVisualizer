@@ -4,26 +4,26 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Proiect 3 MM - Vizualizare Date - Ciuca Marius Cosmin</title>
+        <title>Eurostat Visualizer - Ciuca Marius Cosmin</title>
  
-        <link rel="stylesheet" href="3_1078_CIUCA_Marius_Cosmin.css" />  
-        <script type="text/javascript" src="3_1078_CIUCA_Marius_Cosmin.js"></script>  
+        <link rel="stylesheet" href="index.css" />  
+        <script type="text/javascript" src="index.js"></script>  
     </head>
     <body> 
         <div class="statusBar">
-            <p class="title">Vizualizare date</p>
-            <p class="extraInfo">Sursa: <span id="dataSource">Demo</span></p>
+            <p class="title">Eurostat Visualizer</p>
+            <p class="extraInfo">Source: <span id="dataSource">Demo</span></p>
         </div>
         <div class="statusBarSpacer"></div>
 
         <div class="card">
-            <div class="card-header">Grafic</div> 
+            <div class="card-header">Chart</div> 
             <div class="card-body lineGraph">
-                <label for="selectCountry">Selectati tara:</label>
+                <label for="selectCountry">Country:</label>
                 <select id="selectCountry" class="component"></select>
                 <br/>
                 
-                <label for="selectCountry">Selectati indicatorul:</label>
+                <label for="selectCountry">Indicator:</label>
                 <select id="selectIndicator" class="component"></select>  
 
                 <svg id="lineGraphSvg" viewBox="0 0 800 600" class="component graph">  
@@ -128,15 +128,15 @@
         </div>
  
         <div class="card right-card">
-            <div class="card-header">Tabel</div> 
+            <div class="card-header">Values</div> 
             <div class="card-body scrollable"> 
-                <label for="selectYear">Selectati anul:</label>
+                <label for="selectYear">Year:</label>
                 <select id="selectYear" class="component"></select>  
                 
                 <table class="component table" id="indicatorsTable"> 
                     <thead>
                         <tr>
-                            <th>Tara</th>
+                            <th>Country</th>
                             <th>Indicator 1</th>
                             <th>Indicator 2</th>
                             <th>Indicator 3</th> 
@@ -144,7 +144,7 @@
                     </thead> 
                     <tbody>
                         <tr>
-                            <td>Denumire</td>
+                            <td>Country 1</td>
                             <td class="table-number">00000</td> 
                             <td class="table-number">000</td> 
                             <td class="table-number">000000000</td> 
